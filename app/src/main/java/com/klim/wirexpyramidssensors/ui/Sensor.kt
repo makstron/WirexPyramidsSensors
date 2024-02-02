@@ -152,6 +152,8 @@ fun SensorDashboardUI(viewModel: SensorDashboardViewModel) {
 
         /**
          * Is there anything confusing for you with these buttons below?
+         *
+         * There is a problem with Movement button
          */
         Button(
             onClick = { viewModel.toggleSensor(SensorManager.NOISE_SENSOR) }
@@ -166,9 +168,9 @@ fun SensorDashboardUI(viewModel: SensorDashboardViewModel) {
         }
 
         Button(
-            onClick = { viewModel.toggleSensor(SensorManager.LIGHT_SENSOR) }
+            onClick = { viewModel.toggleSensor(SensorManager.MOVEMENT_SENSOR) }
         ) {
-            Text("MOVEMENT" + (SensorManager.LIGHT_SENSOR in data.measurements.keys))
+            Text("MOVEMENT" + (SensorManager.MOVEMENT_SENSOR in data.measurements.keys))
         }
 
         BuildChart(data.measurements)
