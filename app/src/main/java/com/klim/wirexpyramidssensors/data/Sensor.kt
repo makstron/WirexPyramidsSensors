@@ -1,6 +1,7 @@
 package com.klim.wirexpyramidssensors.data
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import java.io.IOException
 import kotlin.random.Random
 
@@ -65,7 +66,8 @@ class Sensor(val url: String) {
      * should constantly read data from [readNetworkSensor]
      * and emit it.
      */
-    fun dataFlow(): Flow<Float> =
+    //TODO: implement it
+    fun dataFlow(): Flow<Float> = flowOf(0f)
 
 }
 
