@@ -1,6 +1,7 @@
 package com.klim.wirexpyramidssensors.presentation
 
 import androidx.compose.ui.graphics.Color
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.klim.wirexpyramidssensors.data.SensorManager
@@ -18,6 +19,11 @@ import java.lang.Exception
  * the system and then restored.
  */
 class SensorDashboardViewModel(
+    /**
+     * It will help only after [System-initiated Process Death]
+     * NOT after [User-initiated Process Death]
+     */
+    private val savedStateHandle: SavedStateHandle,
     private val sensorDataManager: SensorManager,
 ) : ViewModel() {
 
@@ -40,9 +46,23 @@ class SensorDashboardViewModel(
     private val _screenState = MutableStateFlow<ScreenState>(ScreenState.initial())
     val screenState: Flow<ScreenState> = _screenState
 
-    private val sensorsState = HashMap<String, Boolean>()
+    private var sensorsState: Map<String, Boolean>
+        get() = savedStateHandle.getLiveData<Map<String, Boolean>>(TogglesState).value ?: emptyMap()
+        set(value) {
+            savedStateHandle[TogglesState] = value
+        }
     private val sensorsJobs = HashMap<String, Job>()
     private var measurements = HashMap<String, ChartData>()
+
+    init {
+        sensorsState
+            .toList()
+            .filter { it.second }
+            .map { it.first }
+            .forEach { id ->
+                launchCollector(id)
+            }
+    }
 
     /**
      * Implement function to start/stop listening for the measurements
@@ -50,7 +70,7 @@ class SensorDashboardViewModel(
      */
     fun toggleSensor(id: String) {
         if (getToggleState(id)) {
-            switchToggleState(id)
+            switchToggleState(id, false)
             cancelSubscription(id)
         } else {
             sensorsJobs[id] = launchCollector(id)
@@ -58,9 +78,7 @@ class SensorDashboardViewModel(
     }
 
     private fun getToggleState(id: String): Boolean {
-        return sensorsState.getOrPut(id) {
-            false
-        }
+        return sensorsState[id] ?: false
     }
 
     private fun cancelSubscription(id: String) {
@@ -68,22 +86,23 @@ class SensorDashboardViewModel(
         sensorsJobs.remove(id)
     }
 
-    private fun switchToggleState(id: String): Boolean {
-        val newState = getToggleState(id).not()
-        sensorsState[id] = newState
+    private fun switchToggleState(id: String, targetState: Boolean) {
+        sensorsState = sensorsState
+            .toMutableMap()
+            .apply { this[id] = targetState }
         _screenState.tryEmit(
             _screenState.value.copy(
                 sensorsState = sensorsState.toMap()
             )
         )
-        return newState
     }
 
     private fun launchCollector(id: String): Job {
         return viewModelScope.launch {
             try {
                 val flow = sensorDataManager.getSensorData(id)
-                switchToggleState(id)
+                //switch only if connection succeeded
+                switchToggleState(id, true)
                 flow.collect { newValue ->
                     updateMeasurements(id, newValue)
                 }
@@ -125,6 +144,10 @@ class SensorDashboardViewModel(
     override fun onCleared() {
         super.onCleared()
         sensorDataManager.dispose()
+    }
+
+    companion object {
+        private const val TogglesState = "togglesState"
     }
 
 }
