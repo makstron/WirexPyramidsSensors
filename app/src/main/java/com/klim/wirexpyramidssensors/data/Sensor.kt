@@ -1,8 +1,10 @@
 package com.klim.wirexpyramidssensors.data
 
+import com.klim.wirexpyramidssensors.presentation.entity.SensorsDataChunk
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flow
 import java.io.IOException
+import java.lang.Exception
 import kotlin.random.Random
 
 /**
@@ -44,6 +46,8 @@ import kotlin.random.Random
 
 class Sensor(val url: String) {
 
+    var isActive: Boolean = true
+
     /**
      * DON'T MODIFY THIS FUNCTION
      *
@@ -65,9 +69,25 @@ class Sensor(val url: String) {
      * Implement flow of measurements. Function
      * should constantly read data from [readNetworkSensor]
      * and emit it.
+     *
+     * Looks like there is no need to do smth. with errors since it is real-time data,
+     * we will receive the next value after some time.
+     * In case we need to show some information to a user we can wrap this error here for example
      */
-    //TODO: implement it
-    fun dataFlow(): Flow<Float> = flowOf(0f)
+    fun dataFlow(): Flow<SensorsDataChunk> = flow {
+        while (isActive) {
+            try {
+                emit(
+                    SensorsDataChunk(
+                        time = System.currentTimeMillis(),
+                        value = readNetworkSensor(),
+                    )
+                )
+            } catch (e: Exception) {
+                //TODO: log it if needed
+            }
+        }
+    }
 
 }
 
