@@ -78,8 +78,40 @@ fun SensorDashboardUI(viewModel: SensorDashboardViewModel) {
  * Axis Y - measurement value.
  *
  * DO NOT implement this function
+ * ¯\_(ツ)_/¯
  */
+
 @Composable
-fun BuildChart(measurements: Map<String, List<Float>>) {
-    // some chart drawing code
+fun BuildChart(
+    data: SensorsData,
+    modifier: Modifier = Modifier,
+) {
+    Canvas(
+        modifier = modifier
+            .background(MaterialTheme.colorScheme.secondary)
+            .padding(1.dp)
+            .background(MaterialTheme.colorScheme.background),
+    ) {
+
+        var minTime = Long.MAX_VALUE
+        data.measurements.forEach { key, value ->
+            minTime = java.lang.Long.min(minTime, value.data.first().time)
+        }
+        val chartTimeScale = 100
+        data.measurements.forEach { (key, value) ->
+            val color = value.color
+            value.data.forEach { dataChunk ->
+                drawLine(
+                    color = color, start = Offset(
+                        x = (dataChunk.time - minTime).toFloat() / chartTimeScale,
+                        y = size.height,
+                    ),
+                    end = Offset(
+                        x = (dataChunk.time - minTime).toFloat() / chartTimeScale,
+                        y = size.height - (size.height * dataChunk.value),
+                    )
+                )
+            }
+        }
+    }
 }
