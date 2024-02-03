@@ -1,4 +1,4 @@
-package com.klim.wirexpyramidssensors.ui.theme
+package com.klim.wirexpyramidssensors.presentation.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
